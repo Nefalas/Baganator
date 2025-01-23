@@ -245,26 +245,21 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
   self.Blocker:SetFrameLevel(10000)
 
   self.CategoryName:SetScript("OnEditFocusLost", Save)
-  self.CategorySearch:SetScript("OnEditFocusLost", Save)
+
+  self.CategorySearch = Syndicator.Search.GetSearchBuilder(self)
+  self.CategorySearch:RegisterCallback("OnSkin", function(_, regionType, region, tags)
+    addonTable.Skins.AddFrame(regionType, region, tags)
+  end)
+  self.CategorySearch:RegisterCallback("OnChange", function()
+    Save()
+  end)
+  self.CategorySearch:SetPoint("TOPLEFT", 20, -65)
+  self.CategorySearch:SetPoint("RIGHT", -10, 0)
+  self.CategorySearch:SetHeight(30)
+  table.insert(self.ChangeAlpha, self.CategorySearch)
+
   self.HiddenCheckBox:SetScript("OnClick", Save)
   self.PrefixCheckBox:SetScript("OnClick", Save)
-
-  self.CategoryName:SetScript("OnKeyDown", function(_, key)
-    if key == "ENTER" then
-      Save()
-    elseif key == "TAB" then
-      self.CategoryName:ClearHighlightText()
-      self.CategorySearch:SetFocus()
-    end
-  end)
-  self.CategorySearch:SetScript("OnKeyDown", function(_, key)
-    if key == "ENTER" then
-      Save()
-    elseif key == "TAB" then
-      self.CategorySearch:ClearHighlightText()
-      self.CategoryName:SetFocus()
-    end
-  end)
 
   self.ItemsEditor = self:MakeItemsEditor()
   self.ItemsEditor:SetPoint("TOP", 0, -290)
@@ -303,7 +298,6 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
   addonTable.Skins.AddFrame("Button", self.DeleteButton)
   addonTable.Skins.AddFrame("Button", self.ExportButton)
   addonTable.Skins.AddFrame("EditBox", self.CategoryName)
-  addonTable.Skins.AddFrame("EditBox", self.CategorySearch)
 
   self:Disable()
 end
