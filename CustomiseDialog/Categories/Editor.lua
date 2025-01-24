@@ -245,6 +245,7 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
   self.Blocker:SetFrameLevel(10000)
 
   self.CategoryName:SetScript("OnEditFocusLost", Save)
+  self.CategoryName:SetScript("OnEnterPressed", Save)
 
   local scrollBox = CreateFrame("Frame", nil, self, "WowScrollBox")
   local view = CreateScrollBoxLinearView()
