@@ -357,6 +357,12 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
 
   self.CategoryName:SetScript("OnEditFocusLost", Save)
   self.CategoryName:SetScript("OnEnterPressed", Save)
+  self.CategoryName:SetScript("OnTabPressed", function()
+    if self.TextCategorySearch:IsVisible() then
+      self.CategoryName:ClearHighlightText()
+      self.TextCategorySearch:SetFocus()
+    end
+  end)
 
   self.VisualCategorySearchHolder = CreateFrame("Frame", nil, self)
   self.VisualCategorySearchHolder:SetAllPoints()
@@ -365,6 +371,8 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
     Save()
   end)
   table.insert(self.ChangeAlpha, self.VisualCategorySearch)
+
+  self.TextCategorySearch:SetScript("OnEnterPressed", Save)
 
   self.CategorySearchOptions = {
     visual = {holder = self.VisualCategorySearchHolder, widget = self.VisualCategorySearch, changeText = BAGANATOR_L_RAW_MODE},
