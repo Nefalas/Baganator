@@ -367,14 +367,18 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
   table.insert(self.ChangeAlpha, self.VisualCategorySearch)
 
   self.CategorySearchOptions = {
-    visual = {holder = self.VisualCategorySearchHolder, widget = self.VisualCategorySearch, changeText = BAGANATOR_L_RAW},
-    text = {holder = self.TextCategorySearch, widget = self.TextCategorySearch, changeText = BAGANATOR_L_VISUAL},
+    visual = {holder = self.VisualCategorySearchHolder, widget = self.VisualCategorySearch, changeText = BAGANATOR_L_RAW_MODE},
+    text = {holder = self.TextCategorySearch, widget = self.TextCategorySearch, changeText = BAGANATOR_L_VISUAL_MODE},
   }
+  addonTable.Skins.AddFrame("IconButton", self.ChangeSearchModeButton, {"changeSearchMode"})
 
   local function ApplySearchMode()
     local mode = addonTable.Config.Get(addonTable.Config.Options.CATEGORY_EDIT_SEARCH_MODE)
-    self.ChangeSearchModeButton:SetText(self.CategorySearchOptions[mode].changeText)
-    self.ChangeSearchModeButton:SetWidth(self.ChangeSearchModeButton:GetTextWidth() + 30)
+    self.ChangeSearchModeButton.tooltipHeader = self.CategorySearchOptions[mode].changeText
+
+    if GameTooltip:GetOwner() == self.ChangeSearchModeButton then
+      self.ChangeSearchModeButton:GetScript("OnEnter")(self.ChangeSearchModeButton)
+    end
 
     local oldSearch = self.CategorySearch
     self.CategorySearch = self.CategorySearchOptions[mode].widget
