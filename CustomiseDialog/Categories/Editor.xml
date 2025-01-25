@@ -38,6 +38,18 @@
           <Anchor point="CENTER" relativeKey="$parent.SearchLabel"/>
         </Anchors>
       </Button>
+      <Button parentKey="ChangeSearchModeButton" inherits="UIPanelDynamicResizeButtonTemplate" parentArray="ChangeAlpha">
+        <Anchors>
+          <Anchor point="RIGHT" relativeKey="$parent.HelpButton" relativePoint="LEFT"/>
+        </Anchors>
+      </Button>
+      <EditBox autoFocus="false" inherits="InputBoxTemplate" parentKey="TextCategorySearch" letters="100" parentArray="ChangeAlpha">
+        <Size y="30"/>
+        <Anchors>
+          <Anchor point="TOPLEFT" x="20" y="-65"/>
+          <Anchor point="RIGHT" x="-10"/>
+        </Anchors>
+      </EditBox>
 
       <Button parentKey="ExportButton" text="BAGANATOR_L_EXPORT" inherits="UIPanelDynamicResizeButtonTemplate" parentArray="ChangeAlpha">
         <Anchors>

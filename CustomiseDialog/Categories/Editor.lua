@@ -34,6 +34,117 @@ local function GetCheckBox(self)
   return checkBoxWrapper
 end
 
+local function GetVisualSearch(parent)
+  local scrollBox = CreateFrame("Frame", nil, parent, "WowScrollBox")
+  local view = CreateScrollBoxLinearView()
+  view:SetHorizontal(true)
+  local CategorySearch = Syndicator.Search.GetSearchBuilder(scrollBox)
+  CategorySearch:RegisterCallback("OnSkin", function(_, regionType, region, tags)
+    addonTable.Skins.AddFrame(regionType, region, tags)
+  end)
+  CategorySearch:RegisterCallback("OnResize", function()
+    scrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately)
+  end)
+  CategorySearch.scrollable = true
+  CategorySearch:SetPoint("TOPLEFT")
+  CategorySearch:SetHeight(30)
+  scrollBox:SetPoint("TOPLEFT", 20, -65)
+  scrollBox:SetPoint("RIGHT", -10, 0)
+  scrollBox:SetHeight(30)
+  scrollBox:Init(view)
+  do
+    local function Scroll(frame, direction)
+      local elapsed = 0
+      local delay = 0.1
+      local stepCount = 0
+      frame:SetScript("OnUpdate", function(tbl, dt)
+        elapsed = elapsed + dt
+        if elapsed > delay then
+          elapsed = 0
+
+          local visibleExtentPercentage = scrollBox:GetVisibleExtentPercentage();
+          if visibleExtentPercentage > 0 then
+            local pages = 1 / visibleExtentPercentage;
+            local magnitude = .8;
+            local span = pages - 1;
+            if span > 0 then
+              scrollBox:ScrollInDirection((1 / span) * magnitude, direction)
+            end
+          end
+        end
+      end)
+    end
+    local leftButton = CreateFrame("Button", nil, parent)
+    leftButton:SetSize(9, 15)
+    leftButton:SetPoint("RIGHT", scrollBox, "LEFT", -5, 0)
+    leftButton:SetScript("OnEnter", function()
+      leftButton:SetAlpha(1)
+    end)
+    leftButton:SetScript("OnLeave", function()
+      leftButton:SetAlpha(0.8)
+    end)
+    leftButton:SetAlpha(0.8)
+    leftButton:SetScript("OnMouseDown", function()
+      Scroll(leftButton, ScrollControllerMixin.Directions.Decrease)
+    end)
+    leftButton:SetScript("OnMouseUp", function()
+      leftButton:SetScript("OnUpdate", nil)
+    end)
+    leftButton:SetScript("OnHide", function()
+      leftButton:SetScript("OnUpdate", nil)
+    end)
+    leftButton:SetNormalAtlas("Minimal_SliderBar_Button_Left")
+    local rightButton = CreateFrame("Button", nil, parent)
+    rightButton:SetSize(9, 15)
+    rightButton:SetPoint("LEFT", scrollBox, "RIGHT", 5, 0)
+    rightButton:SetScript("OnMouseDown", function()
+      Scroll(rightButton, ScrollControllerMixin.Directions.Increase)
+    end)
+    rightButton:SetScript("OnMouseUp", function()
+      rightButton:SetScript("OnUpdate", nil)
+    end)
+    rightButton:SetScript("OnHide", function()
+      rightButton:SetScript("OnUpdate", nil)
+    end)
+    rightButton:SetScript("OnEnter", function()
+      rightButton:SetAlpha(1)
+    end)
+    rightButton:SetScript("OnLeave", function()
+      rightButton:SetAlpha(0.8)
+    end)
+    rightButton:SetAlpha(0.8)
+    rightButton:SetNormalAtlas("Minimal_SliderBar_Button_Right")
+    local function Update(scrollPercentage, visibleExtentPercentage)
+      if visibleExtentPercentage < 1 then
+        leftButton:SetShown(scrollPercentage > 0)
+        rightButton:SetShown(scrollPercentage < 1)
+      else
+        leftButton:Hide()
+        rightButton:Hide()
+      end
+    end
+    scrollBox:RegisterCallback(BaseScrollBoxEvents.OnScroll, function(_, scrollPercentage, visibleExtentPercentage)
+      Update(scrollPercentage, visibleExtentPercentage)
+    end)
+    scrollBox:RegisterCallback(BaseScrollBoxEvents.OnSizeChanged, function(_, visibleExtentPercentage)
+      if visibleExtentPercentage >= 1 then
+        leftButton:Hide()
+        rightButton:Hide()
+      end
+    end)
+    scrollBox:RegisterCallback(BaseScrollBoxEvents.OnAllowScrollChanged, function(_, allowScroll)
+      if not allowScroll then
+        leftButton:Hide()
+        rightButton:Hide()
+      else
+        Update(scrollBox:GetScrollPercentage(), scrollBox:GetVisibleExtentPercentage())
+      end
+    end)
+  end
+
+  return CategorySearch
+end
+
 function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
   self.currentCategory = "-1"
 
@@ -247,116 +358,55 @@ function BaganatorCustomiseDialogCategoriesEditorMixin:OnLoad()
   self.CategoryName:SetScript("OnEditFocusLost", Save)
   self.CategoryName:SetScript("OnEnterPressed", Save)
 
-  local scrollBox = CreateFrame("Frame", nil, self, "WowScrollBox")
-  local view = CreateScrollBoxLinearView()
-  view:SetHorizontal(true)
-  self.CategorySearch = Syndicator.Search.GetSearchBuilder(scrollBox)
-  self.CategorySearch:RegisterCallback("OnSkin", function(_, regionType, region, tags)
-    addonTable.Skins.AddFrame(regionType, region, tags)
-  end)
-  self.CategorySearch:RegisterCallback("OnChange", function()
+  self.VisualCategorySearchHolder = CreateFrame("Frame", nil, self)
+  self.VisualCategorySearchHolder:SetAllPoints()
+  self.VisualCategorySearch = GetVisualSearch(self.VisualCategorySearchHolder)
+  self.VisualCategorySearch:RegisterCallback("OnChange", function()
     Save()
   end)
-  self.CategorySearch:RegisterCallback("OnResize", function()
-    scrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately)
-  end)
-  self.CategorySearch.scrollable = true
-  self.CategorySearch:SetPoint("TOPLEFT")
-  self.CategorySearch:SetHeight(30)
-  scrollBox:SetPoint("TOPLEFT", 20, -65)
-  scrollBox:SetPoint("RIGHT", -10, 0)
-  scrollBox:SetHeight(30)
-  scrollBox:Init(view)
-  do
-    local function Scroll(frame, direction)
-      local elapsed = 0
-      local delay = 0.1
-      local stepCount = 0
-      frame:SetScript("OnUpdate", function(tbl, dt)
-        elapsed = elapsed + dt
-        if elapsed > delay then
-          elapsed = 0
+  table.insert(self.ChangeAlpha, self.VisualCategorySearch)
 
-          local visibleExtentPercentage = scrollBox:GetVisibleExtentPercentage();
-          if visibleExtentPercentage > 0 then
-            local pages = 1 / visibleExtentPercentage;
-            local magnitude = .8;
-            local span = pages - 1;
-            if span > 0 then
-              scrollBox:ScrollInDirection((1 / span) * magnitude, direction)
-            end
-          end
-        end
-      end)
-    end
-    local leftButton = CreateFrame("Button", nil, self)
-    leftButton:SetSize(9, 15)
-    leftButton:SetPoint("RIGHT", scrollBox, "LEFT", -5, 0)
-    leftButton:SetScript("OnEnter", function()
-      leftButton:SetAlpha(1)
-    end)
-    leftButton:SetScript("OnLeave", function()
-      leftButton:SetAlpha(0.8)
-    end)
-    leftButton:SetAlpha(0.8)
-    leftButton:SetScript("OnMouseDown", function()
-      Scroll(leftButton, ScrollControllerMixin.Directions.Decrease)
-    end)
-    leftButton:SetScript("OnMouseUp", function()
-      leftButton:SetScript("OnUpdate", nil)
-    end)
-    leftButton:SetScript("OnHide", function()
-      leftButton:SetScript("OnUpdate", nil)
-    end)
-    leftButton:SetNormalAtlas("Minimal_SliderBar_Button_Left")
-    local rightButton = CreateFrame("Button", nil, self)
-    rightButton:SetSize(9, 15)
-    rightButton:SetPoint("LEFT", scrollBox, "RIGHT", 5, 0)
-    rightButton:SetScript("OnMouseDown", function()
-      Scroll(rightButton, ScrollControllerMixin.Directions.Increase)
-    end)
-    rightButton:SetScript("OnMouseUp", function()
-      rightButton:SetScript("OnUpdate", nil)
-    end)
-    rightButton:SetScript("OnHide", function()
-      rightButton:SetScript("OnUpdate", nil)
-    end)
-    rightButton:SetScript("OnEnter", function()
-      rightButton:SetAlpha(1)
-    end)
-    rightButton:SetScript("OnLeave", function()
-      rightButton:SetAlpha(0.8)
-    end)
-    rightButton:SetAlpha(0.8)
-    rightButton:SetNormalAtlas("Minimal_SliderBar_Button_Right")
-    local function Update(scrollPercentage, visibleExtentPercentage)
-      if visibleExtentPercentage < 1 then
-        leftButton:SetShown(scrollPercentage > 0)
-        rightButton:SetShown(scrollPercentage < 1)
-      else
-        leftButton:Hide()
-        rightButton:Hide()
+  self.CategorySearchOptions = {
+    visual = {holder = self.VisualCategorySearchHolder, widget = self.VisualCategorySearch, changeText = BAGANATOR_L_RAW},
+    text = {holder = self.TextCategorySearch, widget = self.TextCategorySearch, changeText = BAGANATOR_L_VISUAL},
+  }
+
+  local function ApplySearchMode()
+    local mode = addonTable.Config.Get(addonTable.Config.Options.CATEGORY_EDIT_SEARCH_MODE)
+    self.ChangeSearchModeButton:SetText(self.CategorySearchOptions[mode].changeText)
+    self.ChangeSearchModeButton:SetWidth(self.ChangeSearchModeButton:GetTextWidth() + 30)
+
+    local oldSearch = self.CategorySearch
+    self.CategorySearch = self.CategorySearchOptions[mode].widget
+    self.CategorySearchOptions[mode].holder:Show()
+    for altMode, details in pairs(self.CategorySearchOptions) do
+      if altMode ~= mode then
+        details.holder:Hide()
       end
     end
-    scrollBox:RegisterCallback(BaseScrollBoxEvents.OnScroll, function(_, scrollPercentage, visibleExtentPercentage)
-      Update(scrollPercentage, visibleExtentPercentage)
-    end)
-    scrollBox:RegisterCallback(BaseScrollBoxEvents.OnSizeChanged, function(_, visibleExtentPercentage)
-      if visibleExtentPercentage >= 1 then
-        leftButton:Hide()
-        rightButton:Hide()
-      end
-    end)
-    scrollBox:RegisterCallback(BaseScrollBoxEvents.OnAllowScrollChanged, function(_, allowScroll)
-      if not allowScroll then
-        leftButton:Hide()
-        rightButton:Hide()
-      else
-        Update(scrollBox:GetScrollPercentage(), scrollBox:GetVisibleExtentPercentage())
-      end
-    end)
+
+    if self.currentCategory ~= "-1" and oldSearch then
+      self.CategorySearch:SetText(oldSearch:GetText())
+    end
   end
-  table.insert(self.ChangeAlpha, self.CategorySearch)
+
+  ApplySearchMode()
+
+  self.ChangeSearchModeButton:SetScript("OnClick", function()
+    local mode = addonTable.Config.Get(addonTable.Config.Options.CATEGORY_EDIT_SEARCH_MODE)
+    if mode == "visual" then
+      addonTable.Config.Set(addonTable.Config.Options.CATEGORY_EDIT_SEARCH_MODE, "text")
+    else
+      addonTable.Config.Set(addonTable.Config.Options.CATEGORY_EDIT_SEARCH_MODE, "visual")
+    end
+    ApplySearchMode()
+  end)
+
+  addonTable.CallbackRegistry:RegisterCallback("SettingChanged", function(_, settingName)
+    if settingName == addonTable.Config.Options.CATEGORY_SEARCH_EDIT_MODE then
+      ApplySearchMode()
+    end
+  end)
 
   self.HiddenCheckBox:SetScript("OnClick", Save)
   self.PrefixCheckBox:SetScript("OnClick", Save)
