@@ -191,6 +191,12 @@ local function SetupBackpackView(frameGroup)
     end
   end)
 
+  
+  addonTable.CallbackRegistry:RegisterCallback("ToggleGroup", function()
+    local newValue = not addonTable.Config.Get(addonTable.Config.Options.CATEGORY_ITEM_GROUPING)
+    addonTable.Config.Set(addonTable.Config.Options.CATEGORY_ITEM_GROUPING, newValue)
+  end)
+
   --Handled by OpenClose.lua
   --[[hooksecurefunc("OpenAllBags", function()
     backpackView:Show()
