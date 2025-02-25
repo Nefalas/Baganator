@@ -67,7 +67,9 @@ end
 
 function BaganatorCategoryViewBackpackViewMixin:OnShow()
   BaganatorItemViewCommonBackpackViewMixin.OnShow(self)
-  addonTable.NewItems:ClearNewItemsForTimeout()
+  if addonTable.NewItems:ClearNewItemsForTimeout() then
+    self.refreshState[addonTable.Constants.RefreshReason.ItemData] = true -- Change to more relevant refresh state
+  end
 end
 
 -- Clear new item status on items that are hidden as part of a stack
@@ -149,8 +151,6 @@ function BaganatorCategoryViewBackpackViewMixin:UpdateForCharacter(character, is
   if self.isGrouping ~= oldIsGrouping then
     self.refreshState[addonTable.Constants.RefreshReason.Layout] = true
   end
-
-  self.searchToApply = self.searchToApply or self.refreshState[addonTable.Constants.RefreshReason.Searches] or self.refreshState[addonTable.Constants.RefreshReason.ItemData]
 
   if self.addToCategoryMode and C_Cursor.GetCursorItem() == nil then
     self.addToCategoryMode = nil
